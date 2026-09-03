@@ -1,5 +1,18 @@
-"depends": {
-  "fabricloader": ">=0.16.0",
-  "minecraft": "~1.21.1",
-  "java": ">=21"
+{
+  "schemaVersion": 1,
+  "id": "donutmap_mod",
+  "version": "1.0.0",
+  "name": "DonutMap Mod",
+  "description": "DonutSMP map helper mod",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.donutmap.DonutMapMod"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.1",
+    "java": ">=21"
+  }
 }
