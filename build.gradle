@@ -8,7 +8,7 @@ buildscript {
         gradlePluginPortal()
     }
     dependencies {
-        classpath 'fabric-loom:fabric-loom.gradle.plugin:1.9-SNAPSHOT'
+        classpath 'fabric-loom:fabric-loom.gradle.plugin:1.8-SNAPSHOT'
     }
 }
 
