@@ -12,15 +12,18 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 
 public class DonutMapMod implements ClientModInitializer {
     private static KeyBinding pinKey;
-    private static final HttpClient client = HttpClient.newHttpClient();
+    private static final HttpClient client = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(2))
+            .build();
     private static final String SERVER_URL = "http://localhost:3000";
-    private static int liveTickTimer = 0;
 
     @Override
     public void onInitializeClient() {
+        // Register keybind (default: Numpad 7)
         pinKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.donutmap.pin",
                 InputUtil.Type.KEYSYM,
@@ -28,38 +31,30 @@ public class DonutMapMod implements ClientModInitializer {
                 "category.donutmap"
         ));
 
+        // Listen for key presses only
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (mc.player == null) return;
-            if (mc.currentScreen != null) return;
 
-            int x = (int) Math.floor(mc.player.getX());
-            int y = (int) Math.floor(mc.player.getY());
-            int z = (int) Math.floor(mc.player.getZ());
-
-            liveTickTimer++;
-            if (liveTickTimer >= 20) {
-                liveTickTimer = 0;
-                sendPayload(String.format("{\"type\":\"LIVE\",\"x\":%d,\"y\":%d,\"z\":%d}", x, y, z));
-            }
-
+            // ONLY runs when the key is actually clicked
             while (pinKey.wasPressed()) {
-                mc.keyboard.setClipboard(String.format("%d %d %d", x, y, z));
-                mc.player.sendMessage(Text.of("§a[DONUTMAP] Pin added: " + x + ", " + z), false);
-                sendPayload(String.format("{\"type\":\"PIN\",\"x\":%d,\"y\":%d,\"z\":%d}", x, y, z));
-            }
-        });
-    }
+                int x = (int) Math.floor(mc.player.getX());
+                int y = (int) Math.floor(mc.player.getY());
+                int z = (int) Math.floor(mc.player.getZ());
 
-    private static void sendPayload(String json) {
-        new Thread(() -> {
-            try {
-                HttpRequest req = HttpRequest.newBuilder()
+                // Show in chat
+                mc.player.sendMessage(Text.literal("§a[DONUTMAP] Pin added: §f" + x + ", " + z), false);
+
+                // Send to local server in a background thread (no lag/anticheat trigger)
+                String json = String.format("{\"x\":%d,\"y\":%d,\"z\":%d}", x, y, z);
+                
+                HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(SERVER_URL))
                         .header("Content-Type", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(json))
                         .build();
-                client.send(req, HttpResponse.BodyHandlers.discarding());
-            } catch (Exception ignored) {}
-        }).start();
+
+                client.sendAsync(request, HttpResponse.BodyHandlers.discarding());
+            }
+        });
     }
 }
