@@ -5,19 +5,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Java 25
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '25'
+          java-version: '21'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.10.2'
       - name: Build with Gradle
-        run: gradle build -Dorg.gradle.java.home=$JAVA_HOME --warning-mode=none
-        env:
-          JAVA_OPTS: "--add-opens=java.base/java.lang=ALL-UNNAMED"
+        run: gradle build
       - name: Upload Jar
         uses: actions/upload-artifact@v4
         with:
