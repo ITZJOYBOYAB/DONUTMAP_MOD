@@ -14,18 +14,18 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 public class DonutMapMod implements ClientModInitializer {
-    private static KeyBinding pinKey;
+    public static KeyBinding pinKey;
     private static final HttpClient client = HttpClient.newHttpClient();
     private static int tickCounter = 0;
 
     @Override
     public void onInitializeClient() {
-        // Registered under standard 'Miscellaneous' controls category so it appears clearly in Key Binds
+        // Register keybinding using vanilla categories and clean translation keys
         pinKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "DonutMap: Place Green Pin",
+                "key.donutmap.pin",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_KP_7,
-                "key.categories.misc"
+                KeyBinding.MISC_CATEGORY
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
@@ -40,7 +40,7 @@ public class DonutMapMod implements ClientModInitializer {
                 sendToServer("{\"type\":\"live\",\"x\":" + x + ",\"z\":" + z + "}");
             }
 
-            // 2. Send permanent green pin on key press (Numpad 7)
+            // 2. Send permanent pin on key press
             while (pinKey.wasPressed()) {
                 int x = (int) Math.floor(mc.player.getX());
                 int z = (int) Math.floor(mc.player.getZ());
