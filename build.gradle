@@ -1,11 +1,28 @@
-plugins {
-    id 'fabric-loom' version '1.7-SNAPSHOT'
+buildscript {
+    repositories {
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath 'fabric-loom:fabric-loom.gradle.plugin:1.7-SNAPSHOT'
+    }
 }
+
+apply plugin: 'fabric-loom'
+
 version = "1.0.0"
 group = "com.donutmap"
 
 repositories {
     mavenCentral()
+    maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net/'
+    }
 }
 
 dependencies {
