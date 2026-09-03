@@ -20,10 +20,10 @@ public class DonutMapMod implements ClientModInitializer {
             .connectTimeout(Duration.ofSeconds(2))
             .build();
     private static final String SERVER_URL = "http://localhost:3000";
+    private static int liveTickTimer = 0;
 
     @Override
     public void onInitializeClient() {
-        // Register keybind (default: Numpad 7)
         pinKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.donutmap.pin",
                 InputUtil.Type.KEYSYM,
@@ -31,30 +31,34 @@ public class DonutMapMod implements ClientModInitializer {
                 "category.donutmap"
         ));
 
-        // Listen for key presses only
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (mc.player == null) return;
 
-            // ONLY runs when the key is actually clicked
+            int x = (int) Math.floor(mc.player.getX());
+            int y = (int) Math.floor(mc.player.getY());
+            int z = (int) Math.floor(mc.player.getZ());
+
+            // 1. Send live position once every second (20 ticks = 1 sec)
+            liveTickTimer++;
+            if (liveTickTimer >= 20) {
+                liveTickTimer = 0;
+                sendPayload(String.format("{\"type\":\"live\",\"x\":%d,\"y\":%d,\"z\":%d}", x, y, z));
+            }
+
+            // 2. Drop permanent pin ONLY when Numpad 7 is pressed
             while (pinKey.wasPressed()) {
-                int x = (int) Math.floor(mc.player.getX());
-                int y = (int) Math.floor(mc.player.getY());
-                int z = (int) Math.floor(mc.player.getZ());
-
-                // Show in chat
                 mc.player.sendMessage(Text.literal("§a[DONUTMAP] Pin added: §f" + x + ", " + z), false);
-
-                // Send to local server in a background thread (no lag/anticheat trigger)
-                String json = String.format("{\"x\":%d,\"y\":%d,\"z\":%d}", x, y, z);
-                
-                HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(SERVER_URL))
-                        .header("Content-Type", "application/json")
-                        .POST(HttpRequest.BodyPublishers.ofString(json))
-                        .build();
-
-                client.sendAsync(request, HttpResponse.BodyHandlers.discarding());
+                sendPayload(String.format("{\"type\":\"pin\",\"x\":%d,\"y\":%d,\"z\":%d}", x, y, z));
             }
         });
+    }
+
+    private void sendPayload(String json) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(SERVER_URL))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+        client.sendAsync(request, HttpResponse.BodyHandlers.discarding());
     }
 }
