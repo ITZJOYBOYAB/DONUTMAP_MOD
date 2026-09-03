@@ -20,12 +20,12 @@ public class DonutMapMod implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // Bind to Numpad 7
+        // Registered under standard 'Miscellaneous' controls category so it appears clearly in Key Binds
         pinKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.donutmap.pin",
+                "DonutMap: Place Green Pin",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_KP_7,
-                "category.donutmap"
+                "key.categories.misc"
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
@@ -40,7 +40,7 @@ public class DonutMapMod implements ClientModInitializer {
                 sendToServer("{\"type\":\"live\",\"x\":" + x + ",\"z\":" + z + "}");
             }
 
-            // 2. Send permanent pin on key press
+            // 2. Send permanent green pin on key press (Numpad 7)
             while (pinKey.wasPressed()) {
                 int x = (int) Math.floor(mc.player.getX());
                 int z = (int) Math.floor(mc.player.getZ());
