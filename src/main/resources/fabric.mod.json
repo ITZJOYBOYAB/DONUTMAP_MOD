@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "donutmap",
+  "version": "1.0.0",
+  "name": "DONUTMAP Sync",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.donutmap.sync.DonutMapMod"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": ">=26.1.2",
+    "fabric-api": "*"
+  }
+}
