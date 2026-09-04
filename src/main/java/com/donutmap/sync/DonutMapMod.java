@@ -21,7 +21,7 @@ public class DonutMapMod implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // Register keybind using the exact vanilla category string recognized by Lunar
+        // Register under Lunar/vanilla MISC category
         pinKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.donutmap.pin",
                 InputUtil.Type.KEYSYM,
@@ -41,12 +41,11 @@ public class DonutMapMod implements ClientModInitializer {
                 sendPayload("{\"type\":\"live\",\"x\":" + x + ",\"z\":" + z + "}");
             }
 
-            // 2. Pin check: checks BOTH the registered KeyBinding AND raw GLFW hardware
+            // 2. Hardware fallback: check KeyBinding AND GLFW hardware key
             boolean isDown = false;
             if (pinKey != null && pinKey.isPressed()) {
                 isDown = true;
             } else if (mc.currentScreen == null && mc.getWindow() != null) {
-                // Direct GLFW check for physical Numpad 7
                 isDown = InputUtil.isKeyPressed(mc.getWindow().getHandle(), GLFW.GLFW_KEY_KP_7);
             }
 
