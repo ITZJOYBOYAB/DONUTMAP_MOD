@@ -1,3 +1,4 @@
 {
-  "key.donutmap.pin": "Place DonutMap Pin"
+  "category.donutmap": "DonutMap",
+  "key.donutmap.pin": "Add Map Pin"
 }
