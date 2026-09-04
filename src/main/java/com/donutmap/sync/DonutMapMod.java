@@ -17,48 +17,54 @@ public class DonutMapMod implements ClientModInitializer {
     public static KeyBinding pinKey;
     private static final HttpClient client = HttpClient.newHttpClient();
     private static int tickCounter = 0;
+    private static boolean wasDown = false;
 
     @Override
     public void onInitializeClient() {
-        System.out.println("[DonutMap] Initializing Client Mod for Lunar...");
-
-        try {
-            pinKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                    "key.donutmap.pin",
-                    InputUtil.Type.KEYSYM,
-                    GLFW.GLFW_KEY_KP_7,
-                    KeyBinding.MISC_CATEGORY
-            ));
-            System.out.println("[DonutMap] Key registered in vanilla MISC category.");
-        } catch (Throwable t) {
-            System.err.println("[DonutMap] Failed to register keybind: " + t.getMessage());
-        }
+        // Register keybind using the exact vanilla category string recognized by Lunar
+        pinKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+                "key.donutmap.pin",
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_KP_7,
+                "key.categories.misc"
+        ));
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (mc.player == null) return;
 
-            // 1. Send live coordinates every 20 ticks (1 sec)
+            // 1. Send live coordinates once every second (20 ticks)
             tickCounter++;
             if (tickCounter >= 20) {
                 tickCounter = 0;
                 int x = (int) Math.floor(mc.player.getX());
                 int z = (int) Math.floor(mc.player.getZ());
-                sendToServer("{\"type\":\"live\",\"x\":" + x + ",\"z\":" + z + "}");
+                sendPayload("{\"type\":\"live\",\"x\":" + x + ",\"z\":" + z + "}");
             }
 
-            // 2. Consume key presses safely via Minecraft's standard input queue
-            if (pinKey != null) {
-                while (pinKey.wasPressed()) {
+            // 2. Pin check: checks BOTH the registered KeyBinding AND raw GLFW hardware
+            boolean isDown = false;
+            if (pinKey != null && pinKey.isPressed()) {
+                isDown = true;
+            } else if (mc.currentScreen == null && mc.getWindow() != null) {
+                // Direct GLFW check for physical Numpad 7
+                isDown = InputUtil.isKeyPressed(mc.getWindow().getHandle(), GLFW.GLFW_KEY_KP_7);
+            }
+
+            if (isDown) {
+                if (!wasDown) {
+                    wasDown = true;
                     int x = (int) Math.floor(mc.player.getX());
                     int z = (int) Math.floor(mc.player.getZ());
-                    sendToServer("{\"type\":\"pin\",\"x\":" + x + ",\"z\":" + z + "}");
-                    mc.player.sendMessage(Text.literal("§a[DONUTMAP] Pin added: " + x + ", " + z), false);
+                    sendPayload("{\"type\":\"pin\",\"x\":" + x + ",\"z\":" + z + "}");
+                    mc.player.sendMessage(Text.literal("§a[DONUTMAP] Pin added at: " + x + ", " + z), false);
                 }
+            } else {
+                wasDown = false;
             }
         });
     }
 
-    private static void sendToServer(String jsonPayload) {
+    private static void sendPayload(String jsonPayload) {
         try {
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create("http://localhost:3000/"))
