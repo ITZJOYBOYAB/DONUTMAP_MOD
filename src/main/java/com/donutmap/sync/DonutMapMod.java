@@ -1,6 +1,6 @@
 package com.donutmap.sync;
 
-import net.fabricmc.api.ModInitializer;
+import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
@@ -13,17 +13,14 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
-public class DonutMapMod implements ModInitializer {
+public class DonutMapMod implements ClientModInitializer {
     public static KeyBinding pinKey;
     private static final HttpClient client = HttpClient.newHttpClient();
     private static int tickCounter = 0;
-    private static boolean wasKeyPressed = false;
 
     @Override
-    public void onInitialize() {
-        System.out.println("========================================");
-        System.out.println("[DonutMap] MOD INITIALIZING FOR 1.21.4!");
-        System.out.println("========================================");
+    public void onInitializeClient() {
+        System.out.println("[DonutMap] Initializing Client Mod for Lunar...");
 
         try {
             pinKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
@@ -32,15 +29,15 @@ public class DonutMapMod implements ModInitializer {
                     GLFW.GLFW_KEY_KP_7,
                     KeyBinding.MISC_CATEGORY
             ));
-            System.out.println("[DonutMap] Key registered in MISC category.");
+            System.out.println("[DonutMap] Key registered in vanilla MISC category.");
         } catch (Throwable t) {
-            System.err.println("[DonutMap] Error registering keybind: " + t.getMessage());
+            System.err.println("[DonutMap] Failed to register keybind: " + t.getMessage());
         }
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (mc.player == null) return;
 
-            // 1. Live coordinates sent every 20 ticks (1 sec)
+            // 1. Send live coordinates every 20 ticks (1 sec)
             tickCounter++;
             if (tickCounter >= 20) {
                 tickCounter = 0;
@@ -49,24 +46,14 @@ public class DonutMapMod implements ModInitializer {
                 sendToServer("{\"type\":\"live\",\"x\":" + x + ",\"z\":" + z + "}");
             }
 
-            // 2. Key trigger: KeyBinding with GLFW hardware fallback
-            boolean isDown = false;
-            if (pinKey != null && pinKey.isPressed()) {
-                isDown = true;
-            } else if (mc.currentScreen == null && mc.getWindow() != null) {
-                isDown = InputUtil.isKeyPressed(mc.getWindow().getHandle(), GLFW.GLFW_KEY_KP_7);
-            }
-
-            if (isDown) {
-                if (!wasKeyPressed) {
-                    wasKeyPressed = true;
+            // 2. Consume key presses safely via Minecraft's standard input queue
+            if (pinKey != null) {
+                while (pinKey.wasPressed()) {
                     int x = (int) Math.floor(mc.player.getX());
                     int z = (int) Math.floor(mc.player.getZ());
                     sendToServer("{\"type\":\"pin\",\"x\":" + x + ",\"z\":" + z + "}");
                     mc.player.sendMessage(Text.literal("§a[DONUTMAP] Pin added: " + x + ", " + z), false);
                 }
-            } else {
-                wasKeyPressed = false;
             }
         });
     }
