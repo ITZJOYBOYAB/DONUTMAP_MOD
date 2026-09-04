@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "name": "DonutMap Mod",
   "description": "DonutSMP map helper mod",
-  "environment": "client",
+  "environment": "*",
   "entrypoints": {
-    "client": [
+    "main": [
       "com.donutmap.sync.DonutMapMod"
     ]
   },
