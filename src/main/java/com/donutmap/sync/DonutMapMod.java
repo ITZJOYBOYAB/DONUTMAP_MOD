@@ -21,18 +21,23 @@ public class DonutMapMod implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // Register under Lunar/vanilla MISC category
-        pinKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.donutmap.pin",
-                InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_KP_7,
-                "key.categories.misc"
-        ));
+        System.out.println("[DonutMap] Loading DonutMap Mod for Minecraft 1.21.1...");
+
+        try {
+            pinKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+                    "key.donutmap.pin",
+                    InputUtil.Type.KEYSYM,
+                    GLFW.GLFW_KEY_KP_7,
+                    "key.categories.misc"
+            ));
+        } catch (Throwable t) {
+            System.err.println("[DonutMap] Could not register keybind: " + t.getMessage());
+        }
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             if (mc.player == null) return;
 
-            // 1. Send live coordinates once every second (20 ticks)
+            // 1. Send live coordinates once per second
             tickCounter++;
             if (tickCounter >= 20) {
                 tickCounter = 0;
@@ -41,12 +46,13 @@ public class DonutMapMod implements ClientModInitializer {
                 sendPayload("{\"type\":\"live\",\"x\":" + x + ",\"z\":" + z + "}");
             }
 
-            // 2. Hardware fallback: check KeyBinding AND GLFW hardware key
+            // 2. Hardware-level and Keybinding check for Numpad 7
             boolean isDown = false;
             if (pinKey != null && pinKey.isPressed()) {
                 isDown = true;
             } else if (mc.currentScreen == null && mc.getWindow() != null) {
-                isDown = InputUtil.isKeyPressed(mc.getWindow().getHandle(), GLFW.GLFW_KEY_KP_7);
+                isDown = InputUtil.isKeyPressed(mc.getWindow().getHandle(), GLFW.GLFW_KEY_KP_7)
+                        || InputUtil.isKeyPressed(mc.getWindow().getHandle(), GLFW.GLFW_KEY_7);
             }
 
             if (isDown) {
